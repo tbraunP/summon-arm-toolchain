@@ -122,20 +122,20 @@ if [ ${USE_LINARO} == 0 ] ; then
 	GDBURL=http://ftp.gnu.org/gnu/gdb/${GDB}.tar.bz2
 else
 	# For Linaro GCC:
-	GCCRELEASE=4.6-2011.10
-	GCCVERSION=4.6-2011.10
+	GCCRELEASE=4.7-2012.09
+	GCCVERSION=4.7-2012.09
 	GCC=gcc-linaro-${GCCVERSION}
-	GCCURL=http://launchpad.net/gcc-linaro/4.6/${GCCRELEASE}/+download/${GCC}.tar.bz2
+	GCCURL=http://launchpad.net/gcc-linaro/4.7/${GCCRELEASE}/+download/${GCC}.tar.bz2
 
 	# For Linaro GDB:
-	GDBRELEASE=7.3-2011.10
-	GDBVERSION=7.3-2011.10
+	GDBRELEASE=7.5-2012.09
+	GDBVERSION=7.5-2012.09
 	GDB=gdb-linaro-${GDBVERSION}
-	GDBURL=http://launchpad.net/gdb-linaro/7.3/${GDBRELEASE}/+download/${GDB}.tar.bz2
+	GDBURL=http://launchpad.net/gdb-linaro/7.5/${GDBRELEASE}/+download/${GDB}.tar.bz2
 fi
 
 BINUTILS=binutils-2.21.1
-NEWLIB=newlib-1.19.0
+NEWLIB=newlib-1.20.0
 #GDB=gdb-7.3.1
 OOCD=openocd-0.5.0
 OOCD_GIT=9e1a16690e669b895dce7c3951b1fe893bfd6149
@@ -420,9 +420,9 @@ if [ ! -e ${STAMPS}/${GCC}-${NEWLIB}.build ]; then
     if [ ${DEFAULT_TO_CORTEX_M3} == 0 ] ; then
 	log "Patching gcc to add multilib support"
 	cd ${GCC}
-	patch -p0 -i ../patches/patch-gcc-config-arm-t-arm-elf.diff
-	patch -p1 -i ../patches/patch-gcc-gengtype-fix.diff 
-	patch -p0 -i ../patches/patch-libgcc-divide-exceptions.diff
+	#patch -p0 -i ../patches/patch-gcc-config-arm-t-arm-elf.diff
+	#patch -p1 -i ../patches/patch-gcc-gengtype-fix.diff 
+	#patch -p0 -i ../patches/patch-libgcc-divide-exceptions.diff
 	cd ..
     fi
 
