@@ -1,5 +1,5 @@
-*** libgcc/Makefile.in.orig	2012-10-14 21:21:24.307617843 +0200
---- libgcc/Makefile.in	2012-10-14 21:23:25.096899838 +0200
+*** libgcc/Makefile.in.orig	2012-10-14 22:41:55.597083932 +0200
+--- libgcc/Makefile.in	2012-10-14 22:44:09.689438108 +0200
 ***************
 *** 500,513 ****
   lib2-divmod-o = $(patsubst %,%$(objext),$(LIB2_DIVMOD_FUNCS))
