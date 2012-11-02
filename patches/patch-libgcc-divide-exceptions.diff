@@ -1,0 +1,50 @@
+*** libgcc/Makefile.in.orig	2012-10-14 22:41:55.597083932 +0200
+--- libgcc/Makefile.in	2012-10-14 22:44:09.689438108 +0200
+***************
+*** 500,513 ****
+  lib2-divmod-o = $(patsubst %,%$(objext),$(LIB2_DIVMOD_FUNCS))
+  $(lib2-divmod-o): %$(objext): $(srcdir)/libgcc2.c
+  	$(gcc_compile) -DL$* -c $< \
+! 	  -fexceptions -fnon-call-exceptions $(vis_hide)
+  libgcc-objects += $(lib2-divmod-o)
+  
+  ifeq ($(enable_shared),yes)
+  lib2-divmod-s-o = $(patsubst %,%_s$(objext),$(LIB2_DIVMOD_FUNCS))
+  $(lib2-divmod-s-o): %_s$(objext): $(srcdir)/libgcc2.c
+  	$(gcc_s_compile) -DL$* -c $< \
+! 	  -fexceptions -fnon-call-exceptions
+  libgcc-s-objects += $(lib2-divmod-s-o)
+  endif
+  
+--- 500,513 ----
+  lib2-divmod-o = $(patsubst %,%$(objext),$(LIB2_DIVMOD_FUNCS))
+  $(lib2-divmod-o): %$(objext): $(srcdir)/libgcc2.c
+  	$(gcc_compile) -DL$* -c $< \
+! 	  -fno-exceptions -fno-non-call-exceptions $(vis_hide)
+  libgcc-objects += $(lib2-divmod-o)
+  
+  ifeq ($(enable_shared),yes)
+  lib2-divmod-s-o = $(patsubst %,%_s$(objext),$(LIB2_DIVMOD_FUNCS))
+  $(lib2-divmod-s-o): %_s$(objext): $(srcdir)/libgcc2.c
+  	$(gcc_s_compile) -DL$* -c $< \
+! 	  -fno-exceptions -fno-non-call-exceptions
+  libgcc-s-objects += $(lib2-divmod-s-o)
+  endif
+  
+***************
+*** 814,820 ****
+  # libgcc_eh.a, only LIB2ADDEH matters.  If we do, only LIB2ADDEHSTATIC and
+  # LIB2ADDEHSHARED matter.  (Usually all three are identical.)
+  
+! c_flags := -fexceptions
+  
+  ifeq ($(enable_shared),yes)
+  
+--- 814,820 ----
+  # libgcc_eh.a, only LIB2ADDEH matters.  If we do, only LIB2ADDEHSTATIC and
+  # LIB2ADDEHSHARED matter.  (Usually all three are identical.)
+  
+! c_flags := -fno-exceptions
+  
+  ifeq ($(enable_shared),yes)
+  
