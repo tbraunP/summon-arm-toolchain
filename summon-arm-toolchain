@@ -20,7 +20,7 @@ set -e
 # You can also pass them as parameters to the script
 ##############################################################################
 TARGET=arm-none-eabi		# Or: TARGET=arm-elf
-PREFIX=${HOME}/sat	# Install location of your final toolchain
+PREFIX=${HOME}/tmp/sat	# Install location of your final toolchain
 DARWIN_OPT_PATH=/usr/local	# Path in which MacPorts or Fink is installed
 # Set to 'sudo' if you need superuser privileges while installing
 SUDO=
@@ -170,10 +170,12 @@ GDBFLAGS=
 BINUTILFLAGS=
 
 if [ ${DEFAULT_TO_CORTEX_M3} == 0 ] ; then
-	GCCFLAGS=
+	GCCFLAGS="--enable-interwork --with-cpu=xscale"
+	echo "Using additional gcc flags ${GCCFLAGS}"
+
 else
 	# To default to the Cortex-M3:
-	GCCFLAGS="--with-arch=armv7-m --with-mode=thumb --with-float=soft"
+	GCCFLAGS="--with-arch=armv7-m --with-mode=thumb --with-float=soft --enable-interwork --with-cpu=xscale"
 fi
 
 # Pull in the local configuration, if any
@@ -437,7 +439,7 @@ if [ ! -e ${STAMPS}/${GCC}-${NEWLIB}.build ]; then
                       --prefix=${PREFIX} \
                       --enable-multilib \
                       --enable-languages="c,c++" \
-                      --with-newlib \
+		      --with-newlib \
                       --with-gnu-as \
                       --with-gnu-ld \
                       --disable-nls \
