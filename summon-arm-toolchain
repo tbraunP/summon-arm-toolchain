@@ -171,11 +171,11 @@ BINUTILFLAGS=
 
 if [ ${DEFAULT_TO_CORTEX_M3} == 0 ] ; then
 	GCCFLAGS="--enable-interwork --with-cpu=xscale"
-	echo "Using additional gcc flags ${GCCFLAGS}"
+	log  "Using additional gcc flags ${GCCFLAGS}"
 
 else
 	# To default to the Cortex-M3:
-	GCCFLAGS="--with-arch=armv7-m --with-mode=thumb --with-float=soft --enable-interwork --with-cpu=xscale"
+	GCCFLAGS="--with-arch=armv7-m --with-mode=thumb --with-float=soft"
 fi
 
 # Pull in the local configuration, if any
