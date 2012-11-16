@@ -1,0 +1,162 @@
+diff -ur newlib-1.17.0-orig/newlib/libc/stdlib/malign.c newlib-1.17.0/newlib/libc/stdlib/malign.c
+--- newlib-1.17.0-orig/newlib/libc/stdlib/malign.c	2002-11-13 02:20:31.000000000 +0100
++++ newlib-1.17.0/newlib/libc/stdlib/malign.c	2011-11-29 13:34:57.000000000 +0100
+@@ -8,12 +8,22 @@
+ 
+ #ifndef _REENT_ONLY
+ 
++extern void _mallocInfoAdd(_PTR,size_t);
++extern _PTR _mallocInfoGet(_PTR);
++extern void _mallocInfoRem(_PTR);
++extern void _mallocInfoAlter(_PTR,size_t);
++
+ _PTR
+ _DEFUN (memalign, (align, nbytes),
+ 	size_t align _AND
+ 	size_t nbytes)
+ {
+-  return _memalign_r (_REENT, align, nbytes);
++  _PTR ptr = _memalign_r (_REENT, align, nbytes);
++  
++  /* notify allocation */
++  _mallocInfoAdd (ptr, nbytes);
++  
++  return ptr;
+ }
+ 
+ #endif
+diff -ur newlib-1.17.0-orig/newlib/libc/stdlib/malloc.c newlib-1.17.0/newlib/libc/stdlib/malloc.c
+--- newlib-1.17.0-orig/newlib/libc/stdlib/malloc.c	2008-11-19 21:55:52.000000000 +0100
++++ newlib-1.17.0/newlib/libc/stdlib/malloc.c	2011-11-29 19:59:19.000000000 +0100
+@@ -208,18 +208,35 @@
+ 
+ #ifndef _REENT_ONLY
+ 
++extern void _mallocInfoAdd(_PTR,size_t);
++extern _PTR _mallocInfoGet(_PTR);
++extern void _mallocInfoRem(_PTR);
++extern void _mallocInfoAlter(_PTR,size_t);
++
+ _PTR
+ _DEFUN (malloc, (nbytes),
+ 	size_t nbytes)		/* get a block */
+ {
+-  return _malloc_r (_REENT, nbytes);
++  _PTR ptr = _malloc_r (_REENT, nbytes);
++  
++  /* notify allocation */
++  _mallocInfoAdd(ptr, nbytes);
++  
++  return ptr;
+ }
+ 
+ void
+ _DEFUN (free, (aptr),
+ 	_PTR aptr)
+ {
++  _PTR info = _mallocInfoGet(aptr);
++  
+   _free_r (_REENT, aptr);
++  
++  /* notify deallocation */
++  _mallocInfoRem(info);
++
++  asm(""); /* keep GCC from doing a sibling call to _mallocInfoRem */
+ }
+ 
+ #endif
+diff -ur newlib-1.17.0-orig/newlib/libc/stdlib/realloc.c newlib-1.17.0/newlib/libc/stdlib/realloc.c
+--- newlib-1.17.0-orig/newlib/libc/stdlib/realloc.c	2000-02-17 20:39:48.000000000 +0100
++++ newlib-1.17.0/newlib/libc/stdlib/realloc.c	2011-11-29 13:34:49.000000000 +0100
+@@ -10,12 +10,38 @@
+ 
+ #ifndef _REENT_ONLY
+ 
++extern void _mallocInfoAdd(_PTR,size_t);
++extern _PTR _mallocInfoGet(_PTR);
++extern void _mallocInfoRem(_PTR);
++extern void _mallocInfoAlter(_PTR,size_t);
++
+ _PTR
+ _DEFUN (realloc, (ap, nbytes),
+ 	_PTR ap _AND
+ 	size_t nbytes)
+ {
+-  return _realloc_r (_REENT, ap, nbytes);
++  _PTR info = _mallocInfoGet(ap);
++  
++  _PTR ptr = _realloc_r (_REENT, ap, nbytes);
++  
++  if (ap == NULL)
++  {
++    /* notify new allocation */
++    _mallocInfoAdd(ptr, nbytes);
++  }
++  else if (ap == ptr)
++  {
++    /* notify inplace reallocation */
++    _mallocInfoAlter(info, nbytes);
++  }
++  else
++  {
++    /* notify non-inplace reallocation */
++    _mallocInfoRem(info);
++    _mallocInfoAdd(ptr, nbytes);
++  }
++  
++  return ptr;
+ }
+ 
+ #endif
+diff -ur newlib-1.17.0-orig/newlib/libc/sys/arm/syscalls.c newlib-1.17.0/newlib/libc/sys/arm/syscalls.c
+--- newlib-1.17.0-orig/newlib/libc/sys/arm/syscalls.c	2008-01-03 23:33:37.000000000 +0100
++++ newlib-1.17.0/newlib/libc/sys/arm/syscalls.c	2011-11-29 23:36:01.000000000 +0100
+@@ -51,9 +51,6 @@
+ static int	do_AngelSWI	_PARAMS ((int, void *));
+ static int 	findslot	_PARAMS ((int));
+ 
+-/* Register name faking - works in collusion with the linker.  */
+-register char * stack_ptr asm ("sp");
+-
+ 
+ /* following is copied from libc/stdio/local.h to check std streams */
+ extern void   _EXFUN(__sinit,(struct _reent *));
+@@ -476,6 +473,10 @@
+ _sbrk (int incr)
+ {
+   extern char   end asm ("end");	/* Defined by the linker.  */
++  extern void * __SBRK_END;			/* Defined by IMote Image Loader */
++  extern void * __SBRK_CURRENT_END;
++  extern void _sbrkFail(int);
++  
+   static char * heap_end;
+   char *        prev_heap_end;
+ 
+@@ -484,24 +485,14 @@
+   
+   prev_heap_end = heap_end;
+   
+-  if (heap_end + incr > stack_ptr)
++  if (heap_end + incr > (char*)__SBRK_END)
+     {
+-      /* Some of the libstdc++-v3 tests rely upon detecting
+-	 out of memory errors, so do not abort here.  */
+-#if 0
+-      extern void abort (void);
+-
+-      _write (1, "_sbrk: Heap and stack collision\n", 32);
+-      
+-      abort ();
+-#else
+-      errno = ENOMEM;
+-      return (caddr_t) -1;
+-#endif
++      _sbrkFail(incr);
+     }
+   
+   heap_end += incr;
+ 
++  __SBRK_CURRENT_END = heap_end;
+   return (caddr_t) prev_heap_end;
+ }
+ 

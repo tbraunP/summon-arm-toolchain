@@ -427,6 +427,13 @@ if [ ! -e ${STAMPS}/${GCC}-${NEWLIB}.build ]; then
 	cd ..
     fi
 
+    if [ ${DEFAULT_TO_CORTEX_M3} == 0 ] ; then
+        log "Patching newlib for XScale"
+        cd ${NEWLIB}
+    	patch -p1 -i ../patches/patch-newlib-imote.diff
+	cd ..
+    fi
+
     cd build
     if [ "X${GCC_CC}" != "X" ] ; then
 	    export GLOBAL_CC=${CC}
